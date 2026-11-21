@@ -348,7 +348,7 @@
         }
 
         function open(source = input, focus = true) {
-            if (input.disabled || !input.isConnected || !input.getClientRects().length) return;
+            if (input.matches(':disabled') || !input.isConnected || !input.getClientRects().length) return;
             if (panel) {
                 if (focus) panel.querySelector('.jpd-day[tabindex="0"]')?.focus();
                 return;
@@ -393,10 +393,10 @@
             popupEvents = new win.AbortController();
             const signal = popupEvents.signal;
             observer = new win.MutationObserver(() => {
-                if (!input.isConnected || !panel?.isConnected || host.hidden
+                if (input.matches(':disabled') || !input.isConnected || !panel?.isConnected || host.hidden
                     || host.getAttribute('aria-hidden') === 'true') close();
             });
-            observer.observe(doc.body, { subtree: true, childList: true });
+            observer.observe(doc.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['disabled'] });
             if (host !== doc.body) observer.observe(host, { attributes: true, attributeFilter: ['hidden', 'aria-hidden'] });
             // Clicking calendar chrome must not send focus to the surrounding modal.
             panel.addEventListener('mousedown', event => {
@@ -404,6 +404,7 @@
                     && !event.target.closest('button:not(:disabled)')) event.preventDefault();
             }, { signal });
             panel.addEventListener('click', event => {
+                if (input.matches(':disabled')) return close();
                 const button = event.target.closest('button');
                 if (button?.dataset.choice) return toggleChoices(button);
                 if (menuButton && button?.matches('.jpd-option:not(:disabled)')) {
